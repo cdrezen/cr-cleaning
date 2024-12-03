@@ -60,7 +60,7 @@ public class CRDataCleaner {
       if (Math.abs(secondsSinceEpoch1 - secondsSinceEpoch2) <= 10)
         return 0;
       else
-        return keyCompare;
+        return 1;
     }
 
   }
