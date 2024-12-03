@@ -1,8 +1,13 @@
 //credit: prof
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import org.apache.hadoop.io.Writable;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 /*
 {"date":"2024-09-13T07:27:05Z","game":"gdc","mode":"Rage_Ladder","round":0,"type":"riverRacePvP",
@@ -20,8 +25,13 @@ import org.codehaus.jackson.annotate.JsonProperty;
 {"utag":"#9UC2GUJVP","ctag":"#QQJCR9CP","trophies":7160,"ctrophies":1012,"exp":46,"league":1,"bestleague":4,"deck":"05070c14171f445e","evo":"","tower":"","strength":13,"crown":0,"elixir":6.14,"touch":1,"score":100}],"warclan":{"day":3,"hour_seg":3,"period":"112-1","training":[false,false]}}
 */
 
+enum Game
+{
+	gdc,
+	pathOfLegend
+}
 
-class Player implements Serializable{
+class Player implements Serializable, Writable{
 	@JsonProperty("utag")
 	public String utag;
 	@JsonProperty("ctag")
@@ -43,27 +53,64 @@ class Player implements Serializable{
 	@JsonProperty("tower")
 	public String tower;
 	@JsonProperty("strength")
-	public double strength;
+	public float strength;
 	@JsonProperty("elixir")
-	public double elixir;
+	public float elixir;
 	@JsonProperty("touch")
-	public int touch;
+	public int touch;//?
 	@JsonProperty("score")
 	public int score;
-}
-class WarClan implements Serializable{
-	@JsonProperty("day")
-	public int day=0;
-	@JsonProperty("hourd_seg")
-	public int hour_seg=0;
-	@JsonProperty("period")
-	public String period;
-	@JsonProperty("training")
-	ArrayList<Boolean> training;	
+
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeUTF(utag);
+		out.writeUTF(ctag);
+		out.writeInt(trophies);
+		out.writeInt(ctrophies);
+		out.writeInt(exp);
+		out.writeInt(league);
+		out.writeInt(bestleague);
+		out.writeLong(Long.parseLong(deck));
+		out.writeInt(Integer.decode(evo));
+		out.writeChar(Integer.decode(tower));
+		out.writeFloat(strength);
+		out.writeFloat(elixir);
+		out.writeBoolean(touch == 1);
+		out.writeInt(score);
+	}
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		utag = in.readUTF();
+		ctag = in.readUTF();
+		trophies = in.readInt();
+		ctrophies = in.readInt();
+		exp = in.readInt();
+		league = in.readInt();
+		bestleague = in.readInt();
+		deck = Long.toHexString(in.readLong());
+		evo = Integer.toHexString(in.readInt());
+		tower = Integer.toHexString(in.readInt());
+		strength = in.readFloat();
+		elixir = in.readFloat();
+		touch = in.readBoolean()? 1 : 0;
+		score = in.readInt();
+	}
 }
 
-class Battle implements Serializable{
-	@JsonProperty("date")
+// class WarClan implements Serializable{
+// 	@JsonProperty("day")
+// 	public int day=0;
+// 	@JsonProperty("hourd_seg")
+// 	public int hour_seg=0;
+// 	@JsonProperty("period")
+// 	public String period;
+// 	@JsonProperty("training")
+// 	ArrayList<Boolean> training;	
+// }
+
+@JsonIgnoreProperties(ignoreUnknown=true)
+class Battle implements Serializable, Writable {
+	@JsonProperty("date")	
 	public String date;
 	@JsonProperty("game")
 	public String game;
@@ -77,7 +124,44 @@ class Battle implements Serializable{
 	public int winner;
 	@JsonProperty("players")
 	ArrayList<Player> players;
-	@JsonProperty("warclan")
-	WarClan warclan;
+	// @JsonProperty("warclan")
+	// WarClan warclan;
 
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeUTF(date);
+		out.writeBoolean(game == "gdc");//out.writeChars(game);
+		out.writeInt(mode.hashCode());//opt more?
+		out.writeChar(round);
+		out.writeInt(type.hashCode());
+		out.writeBoolean(winner	== 1);
+		out.writeChar(players.size());//player array length
+		for (Player p : players) {
+			p.write(out);
+		}
+	}
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		date = in.readUTF();
+		game = Game.values()[in.readBoolean()? 1 : 0].name();
+		mode = String.valueOf(in.readInt());
+		round = in.readChar();
+		type = String.valueOf(in.readInt());
+		winner = in.readBoolean()? 1 : 0;
+		int nb_players = in.readChar();
+		players = new ArrayList<Player>();
+		for (int i = 0; i < nb_players; i++) {
+			Player p = new Player();
+			p.readFields(in);
+			players.add(p);
+		}
+	}
+
+	public String toString() {
+		StringBuilder tmp = new StringBuilder();
+		tmp.append(date);
+		//...
+		return tmp.toString();
+	}
 }

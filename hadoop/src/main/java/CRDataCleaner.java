@@ -1,24 +1,10 @@
-import java.io.DataOutput;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.TreeMap;
-import java.util.UUID;
-
-import javax.naming.Context;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
-import java.io.DataInput;
-import java.io.DataOutput;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -31,7 +17,7 @@ import com.google.gson.Gson;
 
 public class CRDataCleaner {
 
-  public static class CleaningMapper extends Mapper<LongWritable, Text, NullWritable, Battle> 
+  public static class CleaningMapper extends Mapper<LongWritable, Text, Text, Battle> 
   {
 
     Gson gson = new Gson();
@@ -42,11 +28,11 @@ public class CRDataCleaner {
       if (i.get() == 0 || txt.toString().isEmpty())
         return;
       
-      Battle d = gson.fromJson(txt.toString(), Battle.class);
-      String u1 = d.players.get(0).utag;
-      String u2 = d.players.get(1).utag;
+      Battle b = gson.fromJson(txt.toString(), Battle.class);
+      String u1 = b.players.get(0).utag;
+      String u2 = b.players.get(1).utag;
 
-
+      context.write(new Text(u1+u2), b);
     }
 
     @Override
@@ -55,7 +41,7 @@ public class CRDataCleaner {
     }
   }
 
-  public static class CleaningReducer extends Reducer<Text, Battle, Text, Text> 
+  public static class CleaningCombiner extends Reducer<Text, Battle, Text, Text> 
   {
     @Override
     public void reduce(Text key, Iterable<Battle> values,
@@ -73,7 +59,7 @@ public class CRDataCleaner {
     job.setMapperClass(CleaningMapper.class);
     job.setMapOutputKeyClass(NullWritable.class);
     //job.setMapOutputValueClass(City.class);
-    //job.setCombinerClass(City.class);
+    job.setCombinerClass(CleaningCombiner.class);
     //job.setReducerClass(TopKReducer.class);
     //job.setOutputKeyClass(City.class);
     job.setOutputValueClass(Text.class);
