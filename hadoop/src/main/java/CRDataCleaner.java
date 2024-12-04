@@ -122,7 +122,7 @@ public class CRDataCleaner {
     public void reduce(BattleKey key, Iterable<Battle> values, Context context) throws IOException, InterruptedException 
     {
       Battle b = values.iterator().next();
-      context.write(NullWritable.get(), new Text(gson.toJson(b, Battle.class) + " " + b.players.size()));
+      context.write(NullWritable.get(), new Text(gson.toJson(b, Battle.class)));
     }
   }
 

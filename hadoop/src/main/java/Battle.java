@@ -74,9 +74,14 @@ class Player implements Serializable, Writable{
 		out.writeInt(exp);
 		out.writeInt(league);
 		out.writeInt(bestleague);
-		out.writeLong(Long.decode("0x"+deck));
-		out.writeInt(Integer.decode("0x"+evo));
-		out.writeChar(Integer.decode("0x"+tower));
+
+		out.writeLong(Long.decode("#"+deck));
+		out.writeInt(Integer.decode("#"+evo));
+		out.writeChar(Integer.decode("#"+tower));
+		// out.writeUTF(deck);
+		// out.writeUTF(evo);
+		// out.writeUTF(tower);
+
 		out.writeFloat(strength);
 		out.writeFloat(elixir);
 		out.writeBoolean(touch == 1);
@@ -91,9 +96,14 @@ class Player implements Serializable, Writable{
 		exp = in.readInt();
 		league = in.readInt();
 		bestleague = in.readInt();
+
 		deck = Long.toHexString(in.readLong());
 		evo = Integer.toHexString(in.readInt());
-		tower = Integer.toHexString(in.readInt());
+		tower = Integer.toHexString(in.readChar());
+		// deck = in.readUTF();
+		// evo = in.readUTF();
+		// tower = in.readUTF();
+
 		strength = in.readFloat();
 		elixir = in.readFloat();
 		touch = in.readBoolean()? 1 : 0;
@@ -169,7 +179,7 @@ class Battle implements Serializable, Writable {
 		winner = in.readBoolean()? 1 : 0;
 		int nb_players = in.readChar();
 		players = new ArrayList<Player>();
-		for (int i = 0; i < nb_players -1; i++) {//-1?
+		for (int i = 0; i < nb_players; i++) {//-1?
 			Player p = new Player();
 			p.readFields(in);
 			players.add(p);
