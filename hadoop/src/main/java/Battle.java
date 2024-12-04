@@ -97,9 +97,9 @@ class Player implements Serializable, Writable{
 		league = in.readInt();
 		bestleague = in.readInt();
 
-		deck = Long.toHexString(in.readLong()).padStart(16, '0');
-		evo = Integer.toHexString(in.readInt()).padStart(4, '0');
-		tower = Integer.toHexString(in.readChar()).padStart(2, '0');
+		deck = String.format("%016x", in.readLong());// Long.toHexString(in.readLong());
+		evo = Integer.toHexString(in.readInt());//String.format("%04x", in.readInt());//
+		tower = Integer.toHexString(in.readChar());
 		// deck = in.readUTF();
 		// evo = in.readUTF();
 		// tower = in.readUTF();
