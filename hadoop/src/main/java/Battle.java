@@ -5,10 +5,13 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Writable;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import java.lang.reflect.Field;
 /*
 {"date":"2024-09-13T07:27:05Z","game":"gdc","mode":"Rage_Ladder","round":0,"type":"riverRacePvP",
 "winner":0,
@@ -31,6 +34,7 @@ enum Game
 	pathOfLegend
 }
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 class Player implements Serializable, Writable{
 	@JsonProperty("utag")
 	public String utag;
@@ -70,9 +74,9 @@ class Player implements Serializable, Writable{
 		out.writeInt(exp);
 		out.writeInt(league);
 		out.writeInt(bestleague);
-		out.writeLong(Long.parseLong(deck));
-		out.writeInt(Integer.decode(evo));
-		out.writeChar(Integer.decode(tower));
+		out.writeLong(Long.decode("0x"+deck));
+		out.writeInt(Integer.decode("0x"+evo));
+		out.writeChar(Integer.decode("0x"+tower));
 		out.writeFloat(strength);
 		out.writeFloat(elixir);
 		out.writeBoolean(touch == 1);
@@ -94,6 +98,20 @@ class Player implements Serializable, Writable{
 		elixir = in.readFloat();
 		touch = in.readBoolean()? 1 : 0;
 		score = in.readInt();
+	}
+
+	public boolean isAnyEmptyOrNull()
+	{
+		// for (Field f : this.getClass().getFields()) {
+		// 	try {
+		// 		if(f.get(this) == null) return true;
+		// 		if(f.getType().isAssignableFrom(String.class) && f.get(this) == "") return true;
+		// 	} catch (IllegalAccessException e) {
+		// 		continue;
+		// 	}
+		// }
+
+		return StringUtils.isEmpty(utag) || StringUtils.isEmpty(ctag) || StringUtils.isEmpty(deck)  || StringUtils.isEmpty(evo)  || StringUtils.isEmpty(tower);
 	}
 }
 
@@ -151,7 +169,7 @@ class Battle implements Serializable, Writable {
 		winner = in.readBoolean()? 1 : 0;
 		int nb_players = in.readChar();
 		players = new ArrayList<Player>();
-		for (int i = 0; i < nb_players; i++) {
+		for (int i = 0; i < nb_players -1; i++) {//-1?
 			Player p = new Player();
 			p.readFields(in);
 			players.add(p);
@@ -163,5 +181,25 @@ class Battle implements Serializable, Writable {
 		tmp.append(date);
 		//...
 		return tmp.toString();
+	}
+
+	public boolean isAnyEmptyOrNull()
+	{
+		// for (Field f : this.getClass().getFields()) {
+		// 	try {
+		// 		if(f.get(this) == null) return true;
+		// 		if(f.getType().isAssignableFrom(String.class) && f.get(this) == "") return true;				
+		// 	} catch (IllegalAccessException e) {
+		// 		continue;
+		// 	}
+		// }
+
+		if(StringUtils.isEmpty(date)|| StringUtils.isEmpty(game) || StringUtils.isEmpty(mode) || StringUtils.isEmpty(type) || players == null || players.isEmpty()) return true;
+
+		for (Player player : players) {
+			if(player.isAnyEmptyOrNull()) return true;
+		}
+
+		return false;
 	}
 }

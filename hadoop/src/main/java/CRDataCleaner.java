@@ -31,7 +31,7 @@ public class CRDataCleaner {
     }
 
     public BattleKey(String u1, String u2, int  round, String date) {
-      this.key = round + "_" + (u1.compareTo(u2) < 0 ? u1 + u2 : u2 + u1);
+      this.key = round + (u1.compareTo(u2) < 0 ? u1 + u2 : u2 + u1);
       this.date = date;
     }
 
@@ -67,7 +67,7 @@ public class CRDataCleaner {
 
   public static class CleaningMapper extends Mapper<LongWritable, Text, BattleKey, Battle> {
 
-    private final Gson gson = new Gson();;
+    private final Gson gson = new Gson();
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -75,6 +75,9 @@ public class CRDataCleaner {
         return;
 
       Battle battle = gson.fromJson(value.toString(), Battle.class);
+
+      if(battle.isAnyEmptyOrNull()) return;
+
       String u1 = battle.players.get(0).utag;
       String u2 = battle.players.get(1).utag;
       BattleKey battleKey = new BattleKey(u1, u2, battle.round, battle.date);
@@ -101,27 +104,41 @@ public class CRDataCleaner {
     }
   }
 
-  public static class CleaningCombiner extends Reducer<BattleKey, Battle, Text, Text> {
+  public static class CleaningCombiner extends Reducer<BattleKey, Battle, BattleKey, Battle> 
+  {
     @Override
-    public void reduce(BattleKey key, Iterable<Battle> values,
-        Context context) throws IOException, InterruptedException {
+    public void reduce(BattleKey key, Iterable<Battle> values, Context context) throws IOException, InterruptedException 
+    {
+      Battle b = values.iterator().next();
+      context.write(key, b);
+    }
+  }
 
+  public static class CleaningReducer extends Reducer<BattleKey, Battle, NullWritable, Text> 
+  {
+    private final Gson gson = new Gson();
+
+    @Override
+    public void reduce(BattleKey key, Iterable<Battle> values, Context context) throws IOException, InterruptedException 
+    {
+      Battle b = values.iterator().next();
+      context.write(NullWritable.get(), new Text(gson.toJson(b, Battle.class) + " " + b.players.size()));
     }
   }
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "CRDataCleaner");
-    // job.setNumReduceTasks(1);
+    job.setNumReduceTasks(1);
     job.setJarByClass(CRDataCleaner.class);
     job.setMapperClass(CleaningMapper.class);
-    job.setMapOutputKeyClass(NullWritable.class);
-    // job.setMapOutputValueClass(City.class);
+    job.setMapOutputKeyClass(BattleKey.class);
+    job.setMapOutputValueClass(Battle.class);
 
     job.setGroupingComparatorClass(CleanGrouping.class);
     job.setCombinerClass(CleaningCombiner.class);
-    // job.setReducerClass(TopKReducer.class);
-    // job.setOutputKeyClass(City.class);
+    job.setReducerClass(CleaningReducer.class);
+    job.setOutputKeyClass(NullWritable.class);
     job.setOutputValueClass(Text.class);
     job.setOutputFormatClass(TextOutputFormat.class);
     job.setInputFormatClass(TextInputFormat.class);
