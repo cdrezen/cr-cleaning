@@ -75,9 +75,9 @@ class Player implements Serializable, Writable{
 		out.writeInt(league);
 		out.writeInt(bestleague);
 
-		out.writeLong(Long.decode("#"+deck));
-		out.writeInt(Integer.decode("#"+evo));
-		out.writeChar(Integer.decode("#"+tower));
+		out.writeLong(Long.parseUnsignedLong(deck, 16));
+		out.writeInt(Integer.parseUnsignedInt(evo, 16));
+		out.writeChar(Integer.parseUnsignedInt(tower, 16));
 		// out.writeUTF(deck);
 		// out.writeUTF(evo);
 		// out.writeUTF(tower);
@@ -97,9 +97,9 @@ class Player implements Serializable, Writable{
 		league = in.readInt();
 		bestleague = in.readInt();
 
-		deck = Long.toHexString(in.readLong());
-		evo = Integer.toHexString(in.readInt());
-		tower = Integer.toHexString(in.readChar());
+		deck = Long.toHexString(in.readLong()).padStart(16, '0');
+		evo = Integer.toHexString(in.readInt()).padStart(4, '0');
+		tower = Integer.toHexString(in.readChar()).padStart(2, '0');
 		// deck = in.readUTF();
 		// evo = in.readUTF();
 		// tower = in.readUTF();
