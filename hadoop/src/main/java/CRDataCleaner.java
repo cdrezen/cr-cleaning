@@ -2,6 +2,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Comparator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -24,27 +25,31 @@ public class CRDataCleaner {
 
   public static class BattleKey implements WritableComparable<BattleKey> {
 
-    public String key, date;
+    public String key;
+
+    public long seconds;
 
     public BattleKey() {
 
     }
 
-    public BattleKey(String u1, String u2, int  round, String date) {
-      this.key = round + (u1.compareTo(u2) < 0 ? u1 + u2 : u2 + u1);
-      this.date = date;
+    public BattleKey(Battle battle) {
+      String u1 = battle.players.get(0).utag.substring(1);
+      String u2 = battle.players.get(1).utag.substring(1);
+      this.key = battle.round + u1 + u2;
+      this.seconds = Instant.parse(battle.date).getEpochSecond();
     }
 
     @Override
     public void readFields(DataInput in) throws IOException {
       this.key = in.readUTF();
-      this.date = in.readUTF();
+      this.seconds = in.readLong();
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-      out.writeUTF(key);
-      out.writeUTF(date);
+      out.writeUTF(this.key);
+      out.writeLong(this.seconds);
     }
 
     @Override
@@ -53,11 +58,8 @@ public class CRDataCleaner {
       if (keyCompare != 0) {
         return keyCompare;
       }
-      Instant instant1 = Instant.parse(this.date);
-      long secondsSinceEpoch1 = instant1.getEpochSecond();
-      Instant instant2 = Instant.parse(o.date);
-      long secondsSinceEpoch2 = instant2.getEpochSecond();
-      if (Math.abs(secondsSinceEpoch1 - secondsSinceEpoch2) <= 10)
+
+      if (Math.abs(this.seconds - o.seconds) <= 10)
         return 0;
       else
         return 1;
@@ -78,9 +80,9 @@ public class CRDataCleaner {
 
       if(battle.isAnyEmptyOrNull()) return;
 
-      String u1 = battle.players.get(0).utag;
-      String u2 = battle.players.get(1).utag;
-      BattleKey battleKey = new BattleKey(u1, u2, battle.round, battle.date);
+      battle.players.sort(Comparator.comparing(p -> p.utag));
+
+      BattleKey battleKey = new BattleKey(battle);
       context.write(battleKey, battle);
     }
 
@@ -122,6 +124,16 @@ public class CRDataCleaner {
     public void reduce(BattleKey key, Iterable<Battle> values, Context context) throws IOException, InterruptedException 
     {
       Battle b = values.iterator().next();
+
+      //restore data from key:
+      b.date = Instant.ofEpochSecond(key.seconds).toString();
+      Player p0 = b.players.get(0);
+      Player p1 = b.players.get(1);
+      int length = key.key.length();
+      p0.utag = key.key.substring(0, length / 2);
+      p1.utag = key.key.substring(length / 2, length);
+      //
+
       context.write(NullWritable.get(), new Text(gson.toJson(b, Battle.class)));
     }
   }
@@ -135,6 +147,7 @@ public class CRDataCleaner {
     job.setMapOutputKeyClass(BattleKey.class);
     job.setMapOutputValueClass(Battle.class);
 
+    job.setCombinerKeyGroupingComparatorClass(CleanGrouping.class);
     job.setGroupingComparatorClass(CleanGrouping.class);
     job.setCombinerClass(CleaningCombiner.class);
     job.setReducerClass(CleaningReducer.class);
