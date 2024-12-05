@@ -81,6 +81,8 @@ public class CRDataCleaner {
 
       if(battle.isAnyEmptyOrNull()) return;
 
+      if(battle.players.get(0).deck.length() != 16 || battle.players.get(1).deck.length() != 16) return;
+
       battle.players.sort(Comparator.comparing(p -> p.utag));
 
       BattleKey battleKey = new BattleKey(battle);
@@ -150,7 +152,7 @@ public class CRDataCleaner {
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "CRDataCleaner");
-    job.setNumReduceTasks(1);
+    job.setNumReduceTasks(5);
     job.setJarByClass(CRDataCleaner.class);
 
     job.setMapperClass(CleaningMapper.class);
