@@ -4,13 +4,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Writable;
-import org.apache.htrace.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.htrace.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.htrace.fasterxml.jackson.annotation.JsonProperty;
 
@@ -91,8 +86,8 @@ class Player implements Serializable, Writable{
 			out.writeInt(bestleague);
 	
 			out.writeLong(Long.parseUnsignedLong(deck, 16));
-			out.writeInt(Integer.parseUnsignedInt(evo, 16));
-			out.writeChar(Integer.parseUnsignedInt(tower, 16));
+			out.writeInt(!StringUtils.isEmpty(evo) ? Integer.parseUnsignedInt(evo, 16) : 0);
+			out.writeChar(!StringUtils.isEmpty(tower)? Integer.parseUnsignedInt(tower, 16) : 0);
 			// out.writeUTF(deck);
 			// out.writeUTF(evo);
 			// out.writeUTF(tower);
@@ -125,9 +120,43 @@ class Player implements Serializable, Writable{
 			score = in.readInt();
 		}
 	
-		public boolean isAnyEmptyOrNull()
+		public boolean isAnyRelevantEmptyOrNull()
 		{
-			return StringUtils.isEmpty(utag) || StringUtils.isEmpty(ctag) || StringUtils.isEmpty(deck)  || StringUtils.isEmpty(evo)  || StringUtils.isEmpty(tower);
+			return StringUtils.isEmpty(utag) || StringUtils.isEmpty(ctag) || StringUtils.isEmpty(deck);  //|| StringUtils.isEmpty(evo)  || StringUtils.isEmpty(tower);
+		}
+
+		public String toString() {
+			StringBuilder tmp = new StringBuilder();
+			
+			tmp.append(utag);
+			tmp.append(",");
+			tmp.append(ctag);
+			tmp.append(",");
+			tmp.append(trophies);
+			tmp.append(",");
+			tmp.append(ctrophies);
+			tmp.append(",");
+			tmp.append(exp);
+			tmp.append(",");
+			tmp.append(league);
+			tmp.append(",");
+			tmp.append(bestleague);
+			tmp.append(",");
+			tmp.append(deck);
+			tmp.append(",");
+			tmp.append(evo);
+			tmp.append(",");
+			tmp.append(tower);
+			tmp.append(",");
+			tmp.append(strength);
+			tmp.append(",");
+			tmp.append(elixir);
+			tmp.append(",");
+			tmp.append(touch);
+			tmp.append(",");
+			tmp.append(score);
+			
+			return tmp.toString();
 		}
 	}
 	
@@ -193,6 +222,7 @@ class Player implements Serializable, Writable{
 			round = in.readChar();
 			type = Type.values()[in.readChar()].name();
 			winner = in.readBoolean()? 1 : 0;
+
 			int nb_players = in.readChar();
 			players = new ArrayList<Player>();
 			for (int i = 0; i < nb_players; i++) {//-1?
@@ -204,8 +234,23 @@ class Player implements Serializable, Writable{
 
 	public String toString() {
 		StringBuilder tmp = new StringBuilder();
+
 		tmp.append(date);
-		//...
+		tmp.append(",");
+		tmp.append(game);
+		tmp.append(",");
+		tmp.append(mode);
+		tmp.append(",");
+		tmp.append(round);
+		tmp.append(",");
+		tmp.append(type);
+		tmp.append(",");
+		tmp.append(winner);
+		tmp.append(",");
+		tmp.append(players.get(0));
+		tmp.append(",");
+		tmp.append(players.get(1));
+		
 		return tmp.toString();
 	}
 
@@ -223,7 +268,7 @@ class Player implements Serializable, Writable{
 		if(StringUtils.isEmpty(date)|| StringUtils.isEmpty(game) || StringUtils.isEmpty(mode) || StringUtils.isEmpty(type) || players == null || players.isEmpty()) return true;
 
 		for (Player player : players) {
-			if(player.isAnyEmptyOrNull()) return true;
+			if(player.isAnyRelevantEmptyOrNull()) return true;
 		}
 
 		return false;

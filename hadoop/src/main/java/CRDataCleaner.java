@@ -129,7 +129,7 @@ public class CRDataCleaner {
 
   public static class CleaningReducer extends Reducer<BattleKey, Battle, NullWritable, Text> 
   {
-    private final Gson gson = new Gson();
+    //private final Gson gson = new Gson();
 
     @Override
     public void reduce(BattleKey key, Iterable<Battle> values, Context context) throws IOException, InterruptedException 
@@ -145,14 +145,14 @@ public class CRDataCleaner {
       p1.utag = '#' + utags[2];
       //
 
-      context.write(NullWritable.get(), new Text(gson.toJson(b, Battle.class)));
+      context.write(NullWritable.get(), new Text(b.toString()));//gson.toJson(b, Battle.class)));
     }
   }
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "CRDataCleaner");
-    job.setNumReduceTasks(5);
+    job.setNumReduceTasks(7);
     job.setJarByClass(CRDataCleaner.class);
 
     job.setMapperClass(CleaningMapper.class);
