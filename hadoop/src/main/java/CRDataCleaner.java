@@ -63,7 +63,7 @@ public class CRDataCleaner {
       if (Math.abs(this.seconds - o.seconds) <= 10)
         return 0;
       else
-        return 1;
+        return keyCompare;
     }
 
   }
