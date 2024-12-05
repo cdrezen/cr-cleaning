@@ -79,9 +79,11 @@ public class CRDataCleaner {
 
       Battle battle = gson.fromJson(value.toString(), Battle.class);
 
-      if(battle.isAnyEmptyOrNull()) return;
+      if (battle.isAnyEmptyOrNull())
+        return;
 
-      if(battle.players.get(0).deck.length() != 16 || battle.players.get(1).deck.length() != 16) return;
+      if (battle.players.get(0).deck.length() != 16 || battle.players.get(1).deck.length() != 16)
+        return;
 
       battle.players.sort(Comparator.comparing(p -> p.utag));
 
@@ -96,12 +98,12 @@ public class CRDataCleaner {
   }
 
   public static class CleanPartitioner extends Partitioner<BattleKey, Battle> {
-		@Override
-		public int getPartition(BattleKey k, Battle v, int numPartitions) {
-			return Math.abs(k.key.hashCode() % numPartitions);
-		}
-		
-	}
+    @Override
+    public int getPartition(BattleKey k, Battle v, int numPartitions) {
+      return Math.abs(k.key.hashCode() % numPartitions);
+    }
+
+  }
 
   public static class CleanGrouping extends WritableComparator {
 
@@ -117,26 +119,24 @@ public class CRDataCleaner {
     }
   }
 
-  public static class CleaningCombiner extends Reducer<BattleKey, Battle, BattleKey, Battle> 
-  {
+  public static class CleaningCombiner extends Reducer<BattleKey, Battle, BattleKey, Battle> {
     @Override
-    public void reduce(BattleKey key, Iterable<Battle> values, Context context) throws IOException, InterruptedException 
-    {
+    public void reduce(BattleKey key, Iterable<Battle> values, Context context)
+        throws IOException, InterruptedException {
       Battle b = values.iterator().next();
       context.write(key, b);
     }
   }
 
-  public static class CleaningReducer extends Reducer<BattleKey, Battle, NullWritable, Text> 
-  {
-    //private final Gson gson = new Gson();
+  public static class CleaningReducer extends Reducer<BattleKey, Battle, NullWritable, Text> {
+    // private final Gson gson = new Gson();
 
     @Override
-    public void reduce(BattleKey key, Iterable<Battle> values, Context context) throws IOException, InterruptedException 
-    {
+    public void reduce(BattleKey key, Iterable<Battle> values, Context context)
+        throws IOException, InterruptedException {
       Battle b = values.iterator().next();
 
-      //restore data from key:
+      // restore data from key:
       b.date = Instant.ofEpochSecond(key.seconds).toString();
       Player p0 = b.players.get(0);
       Player p1 = b.players.get(1);
@@ -145,14 +145,14 @@ public class CRDataCleaner {
       p1.utag = '#' + utags[2];
       //
 
-      context.write(NullWritable.get(), new Text(b.toString()));//gson.toJson(b, Battle.class)));
+      context.write(NullWritable.get(), new Text(b.toString()));// gson.toJson(b, Battle.class)));
     }
   }
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "CRDataCleaner");
-    job.setNumReduceTasks(7);
+    job.setNumReduceTasks(6);// (1591633227/(128*2^20))/2
     job.setJarByClass(CRDataCleaner.class);
 
     job.setMapperClass(CleaningMapper.class);
@@ -161,7 +161,7 @@ public class CRDataCleaner {
 
     job.setCombinerClass(CleaningCombiner.class);
     job.setCombinerKeyGroupingComparatorClass(CleanGrouping.class);
-    
+
     job.setPartitionerClass(CleanPartitioner.class);
 
     job.setGroupingComparatorClass(CleanGrouping.class);
