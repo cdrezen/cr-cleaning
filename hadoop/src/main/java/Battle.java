@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Writable;
@@ -11,7 +14,6 @@ import org.apache.htrace.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.htrace.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.htrace.fasterxml.jackson.annotation.JsonProperty;
 
-import java.lang.reflect.Field;
 /*
 {"date":"2024-09-13T07:27:05Z","game":"gdc","mode":"Rage_Ladder","round":0,"type":"riverRacePvP",
 "winner":0,
@@ -30,8 +32,20 @@ import java.lang.reflect.Field;
 
 enum Game
 {
+	friendly,
 	gdc,
 	pathOfLegend
+};
+
+enum Type
+{
+	boatBattle,
+	clanMate,
+	friendly,
+	pathOfLegend,
+	riverRaceDuel,
+	riverRaceDuelColosseum,
+	riverRacePvP
 }
 
 @JsonIgnoreProperties(ignoreUnknown=true)
@@ -147,14 +161,23 @@ class Player implements Serializable, Writable{
 		ArrayList<Player> players;
 		// @JsonProperty("warclan")
 		// WarClan warclan;
+
+		private static final ArrayList<String> Modes = new ArrayList<>(Arrays.asList(
+            "7xElixir_Ladder", "CW_Battle_1v1", "CW_Duel_1v1", "ClanWar_BoatBattle", 
+            "DoubleElixir_Ladder", "Duel_1v1_Friendly", "Friendly", "Overtime_Ladder", 
+            "Rage_Ladder", "RampUpElixir_Ladder", "Ranked1v1", "Ranked1v1_CrownRush", 
+            "Ranked1v1_GoldRush", "Ranked1v1_NewArena", "Ranked1v1_NewArena2", 
+            "Ranked1v1_NewArena2_GoldRush", "Ranked1v1_NewArena_CrownRush", 
+            "Ranked1v1_NewArena_GoldRush", "Touchdown_ClanWar", "TripleElixir_Ladder"
+        ));
 	
 		@Override
 		public void write(DataOutput out) throws IOException {
 			//out.writeUTF(date);
-			out.writeBoolean(game == "gdc");//out.writeChars(game);
-			out.writeInt(mode.hashCode());//opt more?
+			out.writeChar(Game.valueOf(game).ordinal());
+			out.writeChar(Modes.indexOf(mode));
 			out.writeChar(round);
-			out.writeInt(type.hashCode());
+			out.writeChar(Type.valueOf(type).ordinal());
 			out.writeBoolean(winner	== 1);
 			out.writeChar(players.size());//player array length
 			for (Player p : players) {
@@ -165,10 +188,10 @@ class Player implements Serializable, Writable{
 		@Override
 		public void readFields(DataInput in) throws IOException {
 			//date = in.readUTF();
-			game = Game.values()[in.readBoolean()? 1 : 0].name();
-			mode = String.valueOf(in.readInt());
+			game = Game.values()[in.readChar()].name();
+			mode = Modes.get(in.readChar());
 			round = in.readChar();
-			type = String.valueOf(in.readInt());
+			type = Type.values()[in.readChar()].name();
 			winner = in.readBoolean()? 1 : 0;
 			int nb_players = in.readChar();
 			players = new ArrayList<Player>();
