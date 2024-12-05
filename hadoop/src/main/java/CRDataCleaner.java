@@ -13,6 +13,7 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -62,7 +63,7 @@ public class CRDataCleaner {
       if (Math.abs(this.seconds - o.seconds) <= 10)
         return 0;
       else
-        return 1;
+        return keyCompare;
     }
 
   }
@@ -91,6 +92,14 @@ public class CRDataCleaner {
 
     }
   }
+
+  public static class CleanPartitioner extends Partitioner<BattleKey, Battle> {
+		@Override
+		public int getPartition(BattleKey k, Battle v, int numPartitions) {
+			return Math.abs(k.key.hashCode() % numPartitions);
+		}
+		
+	}
 
   public static class CleanGrouping extends WritableComparator {
 
@@ -143,13 +152,17 @@ public class CRDataCleaner {
     Job job = Job.getInstance(conf, "CRDataCleaner");
     job.setNumReduceTasks(1);
     job.setJarByClass(CRDataCleaner.class);
+
     job.setMapperClass(CleaningMapper.class);
     job.setMapOutputKeyClass(BattleKey.class);
     job.setMapOutputValueClass(Battle.class);
 
-    job.setCombinerKeyGroupingComparatorClass(CleanGrouping.class);
-    job.setGroupingComparatorClass(CleanGrouping.class);
     job.setCombinerClass(CleaningCombiner.class);
+    job.setCombinerKeyGroupingComparatorClass(CleanGrouping.class);
+    
+    job.setPartitionerClass(CleanPartitioner.class);
+
+    job.setGroupingComparatorClass(CleanGrouping.class);
     job.setReducerClass(CleaningReducer.class);
     job.setOutputKeyClass(NullWritable.class);
     job.setOutputValueClass(Text.class);
