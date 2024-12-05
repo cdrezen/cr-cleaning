@@ -34,8 +34,8 @@ public class CRDataCleaner {
     }
 
     public BattleKey(Battle battle) {
-      String u1 = battle.players.get(0).utag.substring(1);
-      String u2 = battle.players.get(1).utag.substring(1);
+      String u1 = battle.players.get(0).utag;
+      String u2 = battle.players.get(1).utag;
       this.key = battle.round + u1 + u2;
       this.seconds = Instant.parse(battle.date).getEpochSecond();
     }
@@ -129,9 +129,9 @@ public class CRDataCleaner {
       b.date = Instant.ofEpochSecond(key.seconds).toString();
       Player p0 = b.players.get(0);
       Player p1 = b.players.get(1);
-      int length = key.key.length();
-      p0.utag = key.key.substring(0, length / 2);
-      p1.utag = key.key.substring(length / 2, length);
+      String utags[] = key.key.split("#");
+      p0.utag = '#' + utags[1];
+      p1.utag = '#' + utags[2];
       //
 
       context.write(NullWritable.get(), new Text(gson.toJson(b, Battle.class)));
