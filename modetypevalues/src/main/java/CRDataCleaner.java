@@ -41,7 +41,7 @@ public class CRDataCleaner {
       
       //if(battle.isAnyEmptyOrNull()) return;
 
-      String str = battle.game;
+      String str = battle.mode;
 
       if(!list.contains(str))
         list.add(str);

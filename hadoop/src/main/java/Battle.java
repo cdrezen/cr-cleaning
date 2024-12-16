@@ -86,9 +86,6 @@ class Player implements Serializable, Writable {
 		out.writeLong(Long.parseUnsignedLong(deck, 16));
 		out.writeInt(!StringUtils.isEmpty(evo) ? Integer.parseUnsignedInt(evo, 16) : 0);
 		out.writeChar(!StringUtils.isEmpty(tower) ? Integer.parseUnsignedInt(tower, 16) : 0);
-		// out.writeUTF(deck);
-		// out.writeUTF(evo);
-		// out.writeUTF(tower);
 
 		out.writeFloat(strength);
 		out.writeFloat(elixir);
@@ -193,12 +190,27 @@ class Battle implements Serializable, Writable {
 	// WarClan warclan;
 
 	private static final ArrayList<String> Modes = new ArrayList<>(Arrays.asList(
-			"7xElixir_Ladder", "CW_Battle_1v1", "CW_Duel_1v1", "ClanWar_BoatBattle",
-			"DoubleElixir_Ladder", "Duel_1v1_Friendly", "Friendly", "Overtime_Ladder",
-			"Rage_Ladder", "RampUpElixir_Ladder", "Ranked1v1", "Ranked1v1_CrownRush",
-			"Ranked1v1_GoldRush", "Ranked1v1_NewArena", "Ranked1v1_NewArena2",
-			"Ranked1v1_NewArena2_GoldRush", "Ranked1v1_NewArena_CrownRush",
-			"Ranked1v1_NewArena_GoldRush", "Touchdown_ClanWar", "TripleElixir_Ladder"));
+		"7xElixir_Ladder",
+		"CW_Battle_1v1",
+		"CW_Duel_1v1",
+		"ClanWar_BoatBattle",
+		"DoubleElixir_Ladder",
+		"Duel_1v1_Friendly",
+		"Friendly",
+		"Overtime_Ladder",
+		"Rage_Ladder",
+		"RampUpElixir_Ladder",
+		"Ranked1v1",
+		"Ranked1v1_CrownRush",
+		"Ranked1v1_GoldRush",
+		"Ranked1v1_NewArena",
+		"Ranked1v1_NewArena2",
+		"Ranked1v1_NewArena2_CrownRush",
+		"Ranked1v1_NewArena2_GoldRush",
+		"Ranked1v1_NewArena_CrownRush",
+		"Ranked1v1_NewArena_GoldRush",
+		"Touchdown_ClanWar",
+		"TripleElixir_Ladder"));
 
 	@Override
 	public void write(DataOutput out) throws IOException {

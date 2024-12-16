@@ -7,3 +7,8 @@ _SUCCESS
 part-r-00000
 data/tail-sample1.json
 res-*/
+data/half.nljson
+data/halfhalf.nljson
+hadoop/half
+hadoop/halfhalf
+hadoop/note

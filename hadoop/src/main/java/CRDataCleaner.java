@@ -61,9 +61,9 @@ public class CRDataCleaner {
       }
 
       if (Math.abs(this.seconds - o.seconds) <= 10)
-        return 0;
+        return 0;//==
       else
-        return keyCompare;
+        return 1;
     }
 
   }
@@ -129,7 +129,7 @@ public class CRDataCleaner {
   }
 
   public static class CleaningReducer extends Reducer<BattleKey, Battle, NullWritable, Text> {
-    // private final Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     @Override
     public void reduce(BattleKey key, Iterable<Battle> values, Context context)
@@ -145,14 +145,14 @@ public class CRDataCleaner {
       p1.utag = '#' + utags[2];
       //
 
-      context.write(NullWritable.get(), new Text(b.toString()));// gson.toJson(b, Battle.class)));
+      context.write(NullWritable.get(), new Text(gson.toJson(b, Battle.class)));
     }
   }
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "CRDataCleaner");
-    job.setNumReduceTasks(6);// (1591633227/(128*2^20))/2
+    job.setNumReduceTasks(29);// (1591633227/(128*2^20))/2
     job.setJarByClass(CRDataCleaner.class);
 
     job.setMapperClass(CleaningMapper.class);
